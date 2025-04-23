@@ -1,0 +1,47 @@
+version: '3.4'
+
+services:
+  gir:
+    container_name: gir
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    restart: always
+    depends_on:
+      - mongo
+    networks:
+      - gir-network
+    environment:
+      - TZ=UTC  # Set your preferred timezone
+
+  mongo:
+    image: mongo:latest
+    container_name: gir-mongo
+    restart: unless-stopped
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./mongo_data:/data/db
+    networks:
+      - gir-network
+    ports:
+      - "27017:27017"  # Expose MongoDB port (optional, only needed if you want to connect from host)
+
+  # MongoDB admin interface (optional but recommended)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: gir-mongo-express
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    networks:
+      - gir-network
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/
+
+networks:
+  gir-network:
+    driver: bridge
